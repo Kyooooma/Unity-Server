@@ -1,0 +1,20 @@
+syntax = "proto3";
+
+package messagek;
+
+message MoveInfo{
+    string uid = 1;//用户名
+
+    int64 horizontal = 2;//AD
+    int64 vertical = 3;//WS
+    bool is_atk = 4;
+}
+
+message LogInfo{
+    string username = 1;//用户名
+    string password = 2;
+}
+
+message SequenceNotice{
+    int32 sequence = 1;
+}
