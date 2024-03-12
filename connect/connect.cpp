@@ -1,5 +1,10 @@
 #include "connect.h"
 
+ConnectManager::ConnectManager() {
+    listen_fd = -1;
+    type = DEFAULT;
+}
+
 void ConnectManager::SetNONBLOCK(int fd) {
     int flag = fcntl(fd, F_GETFL);
     if (flag < 0) {
@@ -13,8 +18,8 @@ void ConnectManager::SetNONBLOCK(int fd) {
 }
 
 void ConnectManager::startServer(int port) {
-    //创建socket
-    sock_fd = socket(PF_INET, SOCK_STREAM, 0);
+//创建socket
+    sock_fd = socket(PF_INET, SOCK_STREAM | SOCK_NONBLOCK, 0);
     if (sock_fd < 0) {
         perror("Create socket error.");
         exit(EXIT_FAILURE);
@@ -24,8 +29,6 @@ void ConnectManager::startServer(int port) {
         perror("Setsockopt error.");
         exit(EXIT_FAILURE);
     }
-    //设置为非阻塞
-    SetNONBLOCK(sock_fd);
     //bind
     struct sockaddr_in bind_addr{};
     bind_addr.sin_family = AF_INET;
@@ -92,17 +95,45 @@ void ConnectManager::handle_accept() {
             exit(EXIT_FAILURE);
         }
         add_client(conn_sock_fd);
-        //同步之前的所有帧
-        sync(conn_sock_fd);
     }
 }
 
-void ConnectManager::add_client(int fd) {
-    if (fd2client.count(fd)) {
-        fprintf(stderr, "Add client error: the client fd = %d has already added.\n", fd);
-        return;
+void ConnectManager::handle_read(int fd) {
+    auto cm = get_client(fd);
+    if (cm == nullptr) return;
+    while (true) {
+        int recv_size = cm->read_data();
+
+        if (recv_size == 0) {
+            //关闭连接
+            close_client(fd);
+            printf("close sock_fd=%d done.\n", fd);
+            return;
+        }
+
+        if (recv_size < 0) {
+            if ((errno == EAGAIN) || (errno == EWOULDBLOCK)) {
+                //说明读完了
+                return;
+            } else {
+                perror("read error.");
+                return;
+            }
+        }
+        std::cout << "Received from client fd = " << fd << " , received Bytes = " << recv_size << ".\n";
+        cm->offset += recv_size;
+        //解包
+        while (true) {
+            int package_type, len;
+            auto msg = cm->deserialize(&len, &package_type);
+            if (msg == nullptr) {
+                //解包完成
+                cm->calc_data();
+                break;
+            }
+            analyze_package(msg, (MessageType) package_type, len);
+        }
     }
-    fd2client[fd] = std::make_shared<ClientManager>();
 }
 
 void ConnectManager::close_client(int fd) {
@@ -122,33 +153,6 @@ void ConnectManager::close_client(int fd) {
     fd2client.erase(fd);
 }
 
-void ConnectManager::handle_read(int fd) {
-    auto cm = get_client(fd);
-    if (cm == nullptr) return;
-    while (true) {
-        int recv_size = messageManager->read_data(fd);
-
-        if (recv_size == 0) {
-            //关闭连接
-            close_client(fd);
-            printf("close sock_fd=%d done.\n", fd);
-            return;
-        }
-
-        if (recv_size < 0) {
-            if ((errno == EAGAIN) || (errno == EWOULDBLOCK)) {
-                return;
-            } else {
-                perror("read error.");
-                return;
-            }
-        }
-        std::cout << "Received from client fd = " << fd << " , received Bytes = " << recv_size << ".\n";
-
-        messageManager->process_data(cm);
-    }
-}
-
 std::shared_ptr<ClientManager> ConnectManager::get_client(int fd) {
     if (!fd2client.count(fd)) {
         fprintf(stderr, "Get client error: the client fd = %d has already deleted.\n", fd);
@@ -157,52 +161,104 @@ std::shared_ptr<ClientManager> ConnectManager::get_client(int fd) {
     return fd2client[fd];
 }
 
-ConnectManager::ConnectManager() {
-    messageManager = std::make_unique<MessageManager>();
+void ConnectManager::add_broadcast(const std::shared_ptr<MessageInfo> &info) {
+    //tbd
+    add_frame(info);
+    for (auto &[fd, cm]: fd2client) {
+        cm->add_info(info);
+    }
 }
 
-void ConnectManager::broadcast(int curFrame) {
-    messagek::SequenceNotice frameSequence;
-    frameSequence.set_sequence(curFrame);
-    int tot_len;
-    //new
-    auto frameInfo = ClientManager::serialize(frameSequence, MessageType::SequenceNotice, &tot_len);
-    std::shared_ptr<MessageInfo> info = nullptr;
-    if(frameInfo != nullptr){
-        info = std::make_shared<MessageInfo>(frameInfo, tot_len);
-        //delete
-        delete[] frameInfo;
-    }else{
-        std::cout << "send frameSequence error.";
+void ConnectManager::broadcast() {
+    for (auto &[fd, cm]: fd2client) {
+        cm->send_all_message();
     }
-    for(auto &[fd, cm] : fd2client){
-        if(info != nullptr){
-            cm->dq.push_front(info);
+}
+
+void ConnectManager::listenServer(const std::string &ip, int port) {
+    listen_fd = socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK, 0);
+    if (listen_fd < 0) {
+        perror("Error creating socket");
+        return;
+    }
+    add_client(listen_fd);//添加监听服务器
+    struct sockaddr_in serv_addr{};
+    serv_addr.sin_family = AF_INET;
+    serv_addr.sin_addr.s_addr = inet_addr(ip.c_str());
+    serv_addr.sin_port = htons(port);
+    if (connect(listen_fd, (struct sockaddr *) &serv_addr, sizeof(serv_addr)) < 0) {
+        if (errno == EINPROGRESS) {
+            // 连接正在进行中，稍后使用 epoll 等待连接完成
+        } else {
+            perror("Connection failed");
+            close_client(listen_fd);
+            return;
         }
-        while(!cm->dq.empty()){
-            auto msg = cm->dq.front();
-            cm->dq.pop_front();
-            int ret = send(fd, msg->msg, msg->len, 0);
-            if(ret < 0){
-                perror("Handle write error.");
-                continue;
-            }else if(ret == 0){
-                //关闭连接
-                close_client(fd);
-                printf("close sock_fd=%d done.\n", sock_fd);
-                break;
-            }
+    } else {
+        //说明connect成功
+        //将监听服务器添加入epoll中
+        struct epoll_event event{};
+        event.events = EPOLLIN;  // 监听读事件
+        event.data.fd = listen_fd;
+
+        if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, listen_fd, &event) == -1) {
+            perror("epoll_ctl: clientSocket");
+            close_client(listen_fd);
         }
+    }
+}
+
+void ConnectManager::add_client(int fd) {
+    if (fd2client.count(fd)) {
+        fprintf(stderr, "Add client error: the client fd = %d has already added.\n", fd);
+        return;
+    }
+    fd2client[fd] = std::make_shared<ClientManager>(fd);
+    if (type == ServerType::GameServer) {
+        sync(fd);
+    }
+}
+
+void ConnectManager::analyze_package(char *msg, MessageType msg_type, int len) {
+    if (msg_type == MessageType::MoveInfo) {
+        messagek::MoveInfo info;
+        if (MessageUtils::deserialize(info, msg, len) < 0) {
+            std::cout << "Failed to serialize message." << std::endl;
+            return;
+        }
+        std::cout << "uid:: " << info.uid() << " horizontal:: " << info.horizontal() << " vertical:: "
+                  << info.vertical() << " is_atk:: " << info.is_atk() << "\n";
+        //需要delete
+        auto data = MessageUtils::serialize(info, msg_type, &len);
+        auto moveInfo = std::make_shared<MessageInfo>(data, len);
+        delete[] data;
+        //添加广播
+        add_broadcast(moveInfo);
+    } else if (msg_type == MessageType::LogInfo) {
+        messagek::LogInfo info;
+        if (MessageUtils::deserialize(info, msg, len) < 0) {
+            std::cout << "Failed to serialize message." << std::endl;
+            return;
+        }
+        std::cout << "username:: " << info.username() << " password:: " << info.password() << "\n";
+        info.set_password("SUCCESS");
+        //需要delete
+        auto data = MessageUtils::serialize(info, msg_type, &len);
+        auto logInfo = std::make_shared<MessageInfo>(data, len);
+        delete[] data;
+        //添加广播
+        add_broadcast(logInfo);
     }
 }
 
 void ConnectManager::sync(int fd) {
-    for(const auto& msg : frames){
-        int ret = send(fd, msg->msg, msg->len, 0);
-        if(ret < 0){
+    auto cm = get_client(fd);
+    for (const auto &msg: frames) {
+        int ret = cm->send_data(msg);
+        if (ret < 0) {
             perror("Handle write error.");
             continue;
-        }else if(ret == 0){
+        } else if (ret == 0) {
             //关闭连接
             close_client(fd);
             printf("close sock_fd=%d done.\n", fd);
@@ -211,11 +267,8 @@ void ConnectManager::sync(int fd) {
     }
 }
 
-void ConnectManager::add_broadcast(char *val, int length) {
-    std::cout << "add_broadcast" << "\n";
-    auto msg_info = std::make_shared<MessageInfo>(val, length);
-    for(auto &[fd, cm] : fd2client){
-        cm->add_info(msg_info);
+void ConnectManager::add_frame(const std::shared_ptr<MessageInfo> &info) {
+    if (type == ServerType::GameServer) {
+        frames.push_back(info);
     }
-    frames.push_back(msg_info);
 }

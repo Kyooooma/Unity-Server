@@ -1,5 +1,5 @@
-#ifndef MessageInfo_H
-#define MessageInfo_H
+#ifndef UNITY_SERVER_MESSAGEINFO_H
+#define UNITY_SERVER_MESSAGEINFO_H
 #include <cstring>
 
 enum MessageType {
@@ -18,4 +18,4 @@ struct MessageInfo {
 
     ~MessageInfo();
 };
-#endif
+#endif //UNITY_SERVER_MESSAGEINFO_H

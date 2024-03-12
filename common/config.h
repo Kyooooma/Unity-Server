@@ -26,4 +26,10 @@ static constexpr int EXECUTE_INTERVAL = 33;
 static constexpr int LEN_LENGTH = 4;// len所占字节的长度, len = (LEN_LENGTH + TYPE_LENGTH + 数据包信息)
 static constexpr int TYPE_LENGTH = 4;// type所占字节的长度
 
+enum ServerType{
+    GateServer,
+    GameServer,
+    DBServer,
+    DEFAULT,
+};
 #endif

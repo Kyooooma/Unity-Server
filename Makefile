@@ -7,22 +7,36 @@ BUILD_DIR = build
 
 # 目标文件
 OBJECTS = $(BUILD_DIR)/proto/msg.pb.o \
-          $(BUILD_DIR)/message/messageInfo.o \
-          $(BUILD_DIR)/client/client.o \
-          $(BUILD_DIR)/callback/callback.o \
-          $(BUILD_DIR)/message/message.o \
-          $(BUILD_DIR)/connect/connect.o \
-          $(BUILD_DIR)/handler/handler.o \
-          $(BUILD_DIR)/main.o
+          			$(BUILD_DIR)/message/messageInfo.o \
+          			$(BUILD_DIR)/message/messageUtils.o \
+          			$(BUILD_DIR)/client/client.o \
+          			$(BUILD_DIR)/connect/connect.o \
+
+OBJECT_GAME = $(BUILD_DIR)/connect/gameConnect.o \
+              $(BUILD_DIR)/server/gameServer.o
+
+OBJECT_GATE = $(BUILD_DIR)/connect/gateConnect.o \
+              $(BUILD_DIR)/server/gateServer.o
+
+OBJECT_DB = $(BUILD_DIR)/connect/dbConnect.o \
+              $(BUILD_DIR)/server/dbServer.o
 
 # 链接选项
 LDFLAGS = -lprotobuf
 
-all: server
+all: game gate db
 
-# 目标：server
-server: $(OBJECTS)
-	$(CXX) $(OBJECTS) -o $(BUILD_DIR)/server $(LDFLAGS)
+# 目标：gameServer
+game: $(OBJECTS) $(OBJECT_GAME)
+	$(CXX) $(OBJECTS) $(OBJECT_GAME) -o $(BUILD_DIR)/gameServer $(LDFLAGS)
+
+# 目标：gateServer
+gate: $(OBJECTS) $(OBJECT_GATE)
+	$(CXX) $(OBJECTS) $(OBJECT_GATE) -o $(BUILD_DIR)/gateServer $(LDFLAGS)
+
+# 目标：dbServer
+db: $(OBJECTS) $(OBJECT_DB)
+	$(CXX) $(OBJECTS) $(OBJECT_DB) -o $(BUILD_DIR)/dbServer $(LDFLAGS)
 
 # 编译 protobuf 文件
 $(BUILD_DIR)/proto/msg.pb.o: proto/msg.pb.cc
@@ -36,4 +50,9 @@ $(BUILD_DIR)/%.o: %.cpp
 
 # 清理生成的目标文件和可执行文件
 clean:
-	rm -rf $(BUILD_DIR) server
+	find $(BUILD_DIR)/ -name "*.o" -type f -delete
+	find $(BUILD_DIR)/ -name "dbServer" -type f -delete
+	find $(BUILD_DIR)/ -name "gateServer" -type f -delete
+	find $(BUILD_DIR)/ -name "gameServer" -type f -delete
+
+
