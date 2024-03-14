@@ -12,7 +12,7 @@ struct ClientManager{
     int fd;// 客户端的fd
     std::deque<std::shared_ptr<MessageInfo>> dq;
 
-    ClientManager(int fd);
+    explicit ClientManager(int fd);
 
     void add_info(const std::shared_ptr<MessageInfo>& info);
 

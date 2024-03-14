@@ -6,7 +6,17 @@ enum MessageType {
     MoveInfo,
     LogInfo,
     SequenceNotice,
+    NoticeInfo,
+    MoveInfo_only,
+    LogInfo_only,
+    SequenceNotice_only,
+    NoticeInfo_only,
     COUNT
+};
+
+enum MessageCode{
+    LogInSuccess = 200,
+    LogInError = 403
 };
 
 //序列化完成的帧数据

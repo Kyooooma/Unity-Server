@@ -51,6 +51,9 @@ extern LogInfoDefaultTypeInternal _LogInfo_default_instance_;
 class MoveInfo;
 struct MoveInfoDefaultTypeInternal;
 extern MoveInfoDefaultTypeInternal _MoveInfo_default_instance_;
+class NoticeInfo;
+struct NoticeInfoDefaultTypeInternal;
+extern NoticeInfoDefaultTypeInternal _NoticeInfo_default_instance_;
 class SequenceNotice;
 struct SequenceNoticeDefaultTypeInternal;
 extern SequenceNoticeDefaultTypeInternal _SequenceNotice_default_instance_;
@@ -58,6 +61,7 @@ extern SequenceNoticeDefaultTypeInternal _SequenceNotice_default_instance_;
 PROTOBUF_NAMESPACE_OPEN
 template<> ::messagek::LogInfo* Arena::CreateMaybeMessage<::messagek::LogInfo>(Arena*);
 template<> ::messagek::MoveInfo* Arena::CreateMaybeMessage<::messagek::MoveInfo>(Arena*);
+template<> ::messagek::NoticeInfo* Arena::CreateMaybeMessage<::messagek::NoticeInfo>(Arena*);
 template<> ::messagek::SequenceNotice* Arena::CreateMaybeMessage<::messagek::SequenceNotice>(Arena*);
 PROTOBUF_NAMESPACE_CLOSE
 namespace messagek {
@@ -186,6 +190,7 @@ class MoveInfo final :
 
   enum : int {
     kUidFieldNumber = 1,
+    kRecUserFieldNumber = 5,
     kHorizontalFieldNumber = 2,
     kVerticalFieldNumber = 3,
     kIsAtkFieldNumber = 4,
@@ -202,6 +207,20 @@ class MoveInfo final :
   const std::string& _internal_uid() const;
   inline PROTOBUF_ALWAYS_INLINE void _internal_set_uid(const std::string& value);
   std::string* _internal_mutable_uid();
+  public:
+
+  // string recUser = 5;
+  void clear_recuser();
+  const std::string& recuser() const;
+  template <typename ArgT0 = const std::string&, typename... ArgT>
+  void set_recuser(ArgT0&& arg0, ArgT... args);
+  std::string* mutable_recuser();
+  PROTOBUF_NODISCARD std::string* release_recuser();
+  void set_allocated_recuser(std::string* recuser);
+  private:
+  const std::string& _internal_recuser() const;
+  inline PROTOBUF_ALWAYS_INLINE void _internal_set_recuser(const std::string& value);
+  std::string* _internal_mutable_recuser();
   public:
 
   // int64 horizontal = 2;
@@ -240,6 +259,7 @@ class MoveInfo final :
   typedef void DestructorSkippable_;
   struct Impl_ {
     ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr uid_;
+    ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr recuser_;
     int64_t horizontal_;
     int64_t vertical_;
     bool is_atk_;
@@ -373,6 +393,7 @@ class LogInfo final :
   enum : int {
     kUsernameFieldNumber = 1,
     kPasswordFieldNumber = 2,
+    kRecUserFieldNumber = 3,
   };
   // string username = 1;
   void clear_username();
@@ -402,6 +423,20 @@ class LogInfo final :
   std::string* _internal_mutable_password();
   public:
 
+  // string recUser = 3;
+  void clear_recuser();
+  const std::string& recuser() const;
+  template <typename ArgT0 = const std::string&, typename... ArgT>
+  void set_recuser(ArgT0&& arg0, ArgT... args);
+  std::string* mutable_recuser();
+  PROTOBUF_NODISCARD std::string* release_recuser();
+  void set_allocated_recuser(std::string* recuser);
+  private:
+  const std::string& _internal_recuser() const;
+  inline PROTOBUF_ALWAYS_INLINE void _internal_set_recuser(const std::string& value);
+  std::string* _internal_mutable_recuser();
+  public:
+
   // @@protoc_insertion_point(class_scope:messagek.LogInfo)
  private:
   class _Internal;
@@ -412,6 +447,7 @@ class LogInfo final :
   struct Impl_ {
     ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr username_;
     ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr password_;
+    ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr recuser_;
     mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
   };
   union { Impl_ _impl_; };
@@ -540,8 +576,23 @@ class SequenceNotice final :
   // accessors -------------------------------------------------------
 
   enum : int {
+    kRecUserFieldNumber = 2,
     kSequenceFieldNumber = 1,
   };
+  // string recUser = 2;
+  void clear_recuser();
+  const std::string& recuser() const;
+  template <typename ArgT0 = const std::string&, typename... ArgT>
+  void set_recuser(ArgT0&& arg0, ArgT... args);
+  std::string* mutable_recuser();
+  PROTOBUF_NODISCARD std::string* release_recuser();
+  void set_allocated_recuser(std::string* recuser);
+  private:
+  const std::string& _internal_recuser() const;
+  inline PROTOBUF_ALWAYS_INLINE void _internal_set_recuser(const std::string& value);
+  std::string* _internal_mutable_recuser();
+  public:
+
   // int32 sequence = 1;
   void clear_sequence();
   int32_t sequence() const;
@@ -559,7 +610,188 @@ class SequenceNotice final :
   typedef void InternalArenaConstructable_;
   typedef void DestructorSkippable_;
   struct Impl_ {
+    ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr recuser_;
     int32_t sequence_;
+    mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
+  };
+  union { Impl_ _impl_; };
+  friend struct ::TableStruct_msg_2eproto;
+};
+// -------------------------------------------------------------------
+
+class NoticeInfo final :
+    public ::PROTOBUF_NAMESPACE_ID::Message /* @@protoc_insertion_point(class_definition:messagek.NoticeInfo) */ {
+ public:
+  inline NoticeInfo() : NoticeInfo(nullptr) {}
+  ~NoticeInfo() override;
+  explicit PROTOBUF_CONSTEXPR NoticeInfo(::PROTOBUF_NAMESPACE_ID::internal::ConstantInitialized);
+
+  NoticeInfo(const NoticeInfo& from);
+  NoticeInfo(NoticeInfo&& from) noexcept
+    : NoticeInfo() {
+    *this = ::std::move(from);
+  }
+
+  inline NoticeInfo& operator=(const NoticeInfo& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  inline NoticeInfo& operator=(NoticeInfo&& from) noexcept {
+    if (this == &from) return *this;
+    if (GetOwningArena() == from.GetOwningArena()
+  #ifdef PROTOBUF_FORCE_COPY_IN_MOVE
+        && GetOwningArena() != nullptr
+  #endif  // !PROTOBUF_FORCE_COPY_IN_MOVE
+    ) {
+      InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+
+  static const ::PROTOBUF_NAMESPACE_ID::Descriptor* descriptor() {
+    return GetDescriptor();
+  }
+  static const ::PROTOBUF_NAMESPACE_ID::Descriptor* GetDescriptor() {
+    return default_instance().GetMetadata().descriptor;
+  }
+  static const ::PROTOBUF_NAMESPACE_ID::Reflection* GetReflection() {
+    return default_instance().GetMetadata().reflection;
+  }
+  static const NoticeInfo& default_instance() {
+    return *internal_default_instance();
+  }
+  static inline const NoticeInfo* internal_default_instance() {
+    return reinterpret_cast<const NoticeInfo*>(
+               &_NoticeInfo_default_instance_);
+  }
+  static constexpr int kIndexInFileMessages =
+    3;
+
+  friend void swap(NoticeInfo& a, NoticeInfo& b) {
+    a.Swap(&b);
+  }
+  inline void Swap(NoticeInfo* other) {
+    if (other == this) return;
+  #ifdef PROTOBUF_FORCE_COPY_IN_SWAP
+    if (GetOwningArena() != nullptr &&
+        GetOwningArena() == other->GetOwningArena()) {
+   #else  // PROTOBUF_FORCE_COPY_IN_SWAP
+    if (GetOwningArena() == other->GetOwningArena()) {
+  #endif  // !PROTOBUF_FORCE_COPY_IN_SWAP
+      InternalSwap(other);
+    } else {
+      ::PROTOBUF_NAMESPACE_ID::internal::GenericSwap(this, other);
+    }
+  }
+  void UnsafeArenaSwap(NoticeInfo* other) {
+    if (other == this) return;
+    GOOGLE_DCHECK(GetOwningArena() == other->GetOwningArena());
+    InternalSwap(other);
+  }
+
+  // implements Message ----------------------------------------------
+
+  NoticeInfo* New(::PROTOBUF_NAMESPACE_ID::Arena* arena = nullptr) const final {
+    return CreateMaybeMessage<NoticeInfo>(arena);
+  }
+  using ::PROTOBUF_NAMESPACE_ID::Message::CopyFrom;
+  void CopyFrom(const NoticeInfo& from);
+  using ::PROTOBUF_NAMESPACE_ID::Message::MergeFrom;
+  void MergeFrom( const NoticeInfo& from) {
+    NoticeInfo::MergeImpl(*this, from);
+  }
+  private:
+  static void MergeImpl(::PROTOBUF_NAMESPACE_ID::Message& to_msg, const ::PROTOBUF_NAMESPACE_ID::Message& from_msg);
+  public:
+  PROTOBUF_ATTRIBUTE_REINITIALIZES void Clear() final;
+  bool IsInitialized() const final;
+
+  size_t ByteSizeLong() const final;
+  const char* _InternalParse(const char* ptr, ::PROTOBUF_NAMESPACE_ID::internal::ParseContext* ctx) final;
+  uint8_t* _InternalSerialize(
+      uint8_t* target, ::PROTOBUF_NAMESPACE_ID::io::EpsCopyOutputStream* stream) const final;
+  int GetCachedSize() const final { return _impl_._cached_size_.Get(); }
+
+  private:
+  void SharedCtor(::PROTOBUF_NAMESPACE_ID::Arena* arena, bool is_message_owned);
+  void SharedDtor();
+  void SetCachedSize(int size) const final;
+  void InternalSwap(NoticeInfo* other);
+
+  private:
+  friend class ::PROTOBUF_NAMESPACE_ID::internal::AnyMetadata;
+  static ::PROTOBUF_NAMESPACE_ID::StringPiece FullMessageName() {
+    return "messagek.NoticeInfo";
+  }
+  protected:
+  explicit NoticeInfo(::PROTOBUF_NAMESPACE_ID::Arena* arena,
+                       bool is_message_owned = false);
+  public:
+
+  static const ClassData _class_data_;
+  const ::PROTOBUF_NAMESPACE_ID::Message::ClassData*GetClassData() const final;
+
+  ::PROTOBUF_NAMESPACE_ID::Metadata GetMetadata() const final;
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  enum : int {
+    kMsgFieldNumber = 1,
+    kRecUserFieldNumber = 3,
+    kCodeFieldNumber = 2,
+  };
+  // string msg = 1;
+  void clear_msg();
+  const std::string& msg() const;
+  template <typename ArgT0 = const std::string&, typename... ArgT>
+  void set_msg(ArgT0&& arg0, ArgT... args);
+  std::string* mutable_msg();
+  PROTOBUF_NODISCARD std::string* release_msg();
+  void set_allocated_msg(std::string* msg);
+  private:
+  const std::string& _internal_msg() const;
+  inline PROTOBUF_ALWAYS_INLINE void _internal_set_msg(const std::string& value);
+  std::string* _internal_mutable_msg();
+  public:
+
+  // string recUser = 3;
+  void clear_recuser();
+  const std::string& recuser() const;
+  template <typename ArgT0 = const std::string&, typename... ArgT>
+  void set_recuser(ArgT0&& arg0, ArgT... args);
+  std::string* mutable_recuser();
+  PROTOBUF_NODISCARD std::string* release_recuser();
+  void set_allocated_recuser(std::string* recuser);
+  private:
+  const std::string& _internal_recuser() const;
+  inline PROTOBUF_ALWAYS_INLINE void _internal_set_recuser(const std::string& value);
+  std::string* _internal_mutable_recuser();
+  public:
+
+  // int32 code = 2;
+  void clear_code();
+  int32_t code() const;
+  void set_code(int32_t value);
+  private:
+  int32_t _internal_code() const;
+  void _internal_set_code(int32_t value);
+  public:
+
+  // @@protoc_insertion_point(class_scope:messagek.NoticeInfo)
+ private:
+  class _Internal;
+
+  template <typename T> friend class ::PROTOBUF_NAMESPACE_ID::Arena::InternalHelper;
+  typedef void InternalArenaConstructable_;
+  typedef void DestructorSkippable_;
+  struct Impl_ {
+    ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr msg_;
+    ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr recuser_;
+    int32_t code_;
     mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
   };
   union { Impl_ _impl_; };
@@ -686,6 +918,56 @@ inline void MoveInfo::set_is_atk(bool value) {
   // @@protoc_insertion_point(field_set:messagek.MoveInfo.is_atk)
 }
 
+// string recUser = 5;
+inline void MoveInfo::clear_recuser() {
+  _impl_.recuser_.ClearToEmpty();
+}
+inline const std::string& MoveInfo::recuser() const {
+  // @@protoc_insertion_point(field_get:messagek.MoveInfo.recUser)
+  return _internal_recuser();
+}
+template <typename ArgT0, typename... ArgT>
+inline PROTOBUF_ALWAYS_INLINE
+void MoveInfo::set_recuser(ArgT0&& arg0, ArgT... args) {
+ 
+ _impl_.recuser_.Set(static_cast<ArgT0 &&>(arg0), args..., GetArenaForAllocation());
+  // @@protoc_insertion_point(field_set:messagek.MoveInfo.recUser)
+}
+inline std::string* MoveInfo::mutable_recuser() {
+  std::string* _s = _internal_mutable_recuser();
+  // @@protoc_insertion_point(field_mutable:messagek.MoveInfo.recUser)
+  return _s;
+}
+inline const std::string& MoveInfo::_internal_recuser() const {
+  return _impl_.recuser_.Get();
+}
+inline void MoveInfo::_internal_set_recuser(const std::string& value) {
+  
+  _impl_.recuser_.Set(value, GetArenaForAllocation());
+}
+inline std::string* MoveInfo::_internal_mutable_recuser() {
+  
+  return _impl_.recuser_.Mutable(GetArenaForAllocation());
+}
+inline std::string* MoveInfo::release_recuser() {
+  // @@protoc_insertion_point(field_release:messagek.MoveInfo.recUser)
+  return _impl_.recuser_.Release();
+}
+inline void MoveInfo::set_allocated_recuser(std::string* recuser) {
+  if (recuser != nullptr) {
+    
+  } else {
+    
+  }
+  _impl_.recuser_.SetAllocated(recuser, GetArenaForAllocation());
+#ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  if (_impl_.recuser_.IsDefault()) {
+    _impl_.recuser_.Set("", GetArenaForAllocation());
+  }
+#endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  // @@protoc_insertion_point(field_set_allocated:messagek.MoveInfo.recUser)
+}
+
 // -------------------------------------------------------------------
 
 // LogInfo
@@ -790,6 +1072,56 @@ inline void LogInfo::set_allocated_password(std::string* password) {
   // @@protoc_insertion_point(field_set_allocated:messagek.LogInfo.password)
 }
 
+// string recUser = 3;
+inline void LogInfo::clear_recuser() {
+  _impl_.recuser_.ClearToEmpty();
+}
+inline const std::string& LogInfo::recuser() const {
+  // @@protoc_insertion_point(field_get:messagek.LogInfo.recUser)
+  return _internal_recuser();
+}
+template <typename ArgT0, typename... ArgT>
+inline PROTOBUF_ALWAYS_INLINE
+void LogInfo::set_recuser(ArgT0&& arg0, ArgT... args) {
+ 
+ _impl_.recuser_.Set(static_cast<ArgT0 &&>(arg0), args..., GetArenaForAllocation());
+  // @@protoc_insertion_point(field_set:messagek.LogInfo.recUser)
+}
+inline std::string* LogInfo::mutable_recuser() {
+  std::string* _s = _internal_mutable_recuser();
+  // @@protoc_insertion_point(field_mutable:messagek.LogInfo.recUser)
+  return _s;
+}
+inline const std::string& LogInfo::_internal_recuser() const {
+  return _impl_.recuser_.Get();
+}
+inline void LogInfo::_internal_set_recuser(const std::string& value) {
+  
+  _impl_.recuser_.Set(value, GetArenaForAllocation());
+}
+inline std::string* LogInfo::_internal_mutable_recuser() {
+  
+  return _impl_.recuser_.Mutable(GetArenaForAllocation());
+}
+inline std::string* LogInfo::release_recuser() {
+  // @@protoc_insertion_point(field_release:messagek.LogInfo.recUser)
+  return _impl_.recuser_.Release();
+}
+inline void LogInfo::set_allocated_recuser(std::string* recuser) {
+  if (recuser != nullptr) {
+    
+  } else {
+    
+  }
+  _impl_.recuser_.SetAllocated(recuser, GetArenaForAllocation());
+#ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  if (_impl_.recuser_.IsDefault()) {
+    _impl_.recuser_.Set("", GetArenaForAllocation());
+  }
+#endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  // @@protoc_insertion_point(field_set_allocated:messagek.LogInfo.recUser)
+}
+
 // -------------------------------------------------------------------
 
 // SequenceNotice
@@ -814,9 +1146,185 @@ inline void SequenceNotice::set_sequence(int32_t value) {
   // @@protoc_insertion_point(field_set:messagek.SequenceNotice.sequence)
 }
 
+// string recUser = 2;
+inline void SequenceNotice::clear_recuser() {
+  _impl_.recuser_.ClearToEmpty();
+}
+inline const std::string& SequenceNotice::recuser() const {
+  // @@protoc_insertion_point(field_get:messagek.SequenceNotice.recUser)
+  return _internal_recuser();
+}
+template <typename ArgT0, typename... ArgT>
+inline PROTOBUF_ALWAYS_INLINE
+void SequenceNotice::set_recuser(ArgT0&& arg0, ArgT... args) {
+ 
+ _impl_.recuser_.Set(static_cast<ArgT0 &&>(arg0), args..., GetArenaForAllocation());
+  // @@protoc_insertion_point(field_set:messagek.SequenceNotice.recUser)
+}
+inline std::string* SequenceNotice::mutable_recuser() {
+  std::string* _s = _internal_mutable_recuser();
+  // @@protoc_insertion_point(field_mutable:messagek.SequenceNotice.recUser)
+  return _s;
+}
+inline const std::string& SequenceNotice::_internal_recuser() const {
+  return _impl_.recuser_.Get();
+}
+inline void SequenceNotice::_internal_set_recuser(const std::string& value) {
+  
+  _impl_.recuser_.Set(value, GetArenaForAllocation());
+}
+inline std::string* SequenceNotice::_internal_mutable_recuser() {
+  
+  return _impl_.recuser_.Mutable(GetArenaForAllocation());
+}
+inline std::string* SequenceNotice::release_recuser() {
+  // @@protoc_insertion_point(field_release:messagek.SequenceNotice.recUser)
+  return _impl_.recuser_.Release();
+}
+inline void SequenceNotice::set_allocated_recuser(std::string* recuser) {
+  if (recuser != nullptr) {
+    
+  } else {
+    
+  }
+  _impl_.recuser_.SetAllocated(recuser, GetArenaForAllocation());
+#ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  if (_impl_.recuser_.IsDefault()) {
+    _impl_.recuser_.Set("", GetArenaForAllocation());
+  }
+#endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  // @@protoc_insertion_point(field_set_allocated:messagek.SequenceNotice.recUser)
+}
+
+// -------------------------------------------------------------------
+
+// NoticeInfo
+
+// string msg = 1;
+inline void NoticeInfo::clear_msg() {
+  _impl_.msg_.ClearToEmpty();
+}
+inline const std::string& NoticeInfo::msg() const {
+  // @@protoc_insertion_point(field_get:messagek.NoticeInfo.msg)
+  return _internal_msg();
+}
+template <typename ArgT0, typename... ArgT>
+inline PROTOBUF_ALWAYS_INLINE
+void NoticeInfo::set_msg(ArgT0&& arg0, ArgT... args) {
+ 
+ _impl_.msg_.Set(static_cast<ArgT0 &&>(arg0), args..., GetArenaForAllocation());
+  // @@protoc_insertion_point(field_set:messagek.NoticeInfo.msg)
+}
+inline std::string* NoticeInfo::mutable_msg() {
+  std::string* _s = _internal_mutable_msg();
+  // @@protoc_insertion_point(field_mutable:messagek.NoticeInfo.msg)
+  return _s;
+}
+inline const std::string& NoticeInfo::_internal_msg() const {
+  return _impl_.msg_.Get();
+}
+inline void NoticeInfo::_internal_set_msg(const std::string& value) {
+  
+  _impl_.msg_.Set(value, GetArenaForAllocation());
+}
+inline std::string* NoticeInfo::_internal_mutable_msg() {
+  
+  return _impl_.msg_.Mutable(GetArenaForAllocation());
+}
+inline std::string* NoticeInfo::release_msg() {
+  // @@protoc_insertion_point(field_release:messagek.NoticeInfo.msg)
+  return _impl_.msg_.Release();
+}
+inline void NoticeInfo::set_allocated_msg(std::string* msg) {
+  if (msg != nullptr) {
+    
+  } else {
+    
+  }
+  _impl_.msg_.SetAllocated(msg, GetArenaForAllocation());
+#ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  if (_impl_.msg_.IsDefault()) {
+    _impl_.msg_.Set("", GetArenaForAllocation());
+  }
+#endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  // @@protoc_insertion_point(field_set_allocated:messagek.NoticeInfo.msg)
+}
+
+// int32 code = 2;
+inline void NoticeInfo::clear_code() {
+  _impl_.code_ = 0;
+}
+inline int32_t NoticeInfo::_internal_code() const {
+  return _impl_.code_;
+}
+inline int32_t NoticeInfo::code() const {
+  // @@protoc_insertion_point(field_get:messagek.NoticeInfo.code)
+  return _internal_code();
+}
+inline void NoticeInfo::_internal_set_code(int32_t value) {
+  
+  _impl_.code_ = value;
+}
+inline void NoticeInfo::set_code(int32_t value) {
+  _internal_set_code(value);
+  // @@protoc_insertion_point(field_set:messagek.NoticeInfo.code)
+}
+
+// string recUser = 3;
+inline void NoticeInfo::clear_recuser() {
+  _impl_.recuser_.ClearToEmpty();
+}
+inline const std::string& NoticeInfo::recuser() const {
+  // @@protoc_insertion_point(field_get:messagek.NoticeInfo.recUser)
+  return _internal_recuser();
+}
+template <typename ArgT0, typename... ArgT>
+inline PROTOBUF_ALWAYS_INLINE
+void NoticeInfo::set_recuser(ArgT0&& arg0, ArgT... args) {
+ 
+ _impl_.recuser_.Set(static_cast<ArgT0 &&>(arg0), args..., GetArenaForAllocation());
+  // @@protoc_insertion_point(field_set:messagek.NoticeInfo.recUser)
+}
+inline std::string* NoticeInfo::mutable_recuser() {
+  std::string* _s = _internal_mutable_recuser();
+  // @@protoc_insertion_point(field_mutable:messagek.NoticeInfo.recUser)
+  return _s;
+}
+inline const std::string& NoticeInfo::_internal_recuser() const {
+  return _impl_.recuser_.Get();
+}
+inline void NoticeInfo::_internal_set_recuser(const std::string& value) {
+  
+  _impl_.recuser_.Set(value, GetArenaForAllocation());
+}
+inline std::string* NoticeInfo::_internal_mutable_recuser() {
+  
+  return _impl_.recuser_.Mutable(GetArenaForAllocation());
+}
+inline std::string* NoticeInfo::release_recuser() {
+  // @@protoc_insertion_point(field_release:messagek.NoticeInfo.recUser)
+  return _impl_.recuser_.Release();
+}
+inline void NoticeInfo::set_allocated_recuser(std::string* recuser) {
+  if (recuser != nullptr) {
+    
+  } else {
+    
+  }
+  _impl_.recuser_.SetAllocated(recuser, GetArenaForAllocation());
+#ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  if (_impl_.recuser_.IsDefault()) {
+    _impl_.recuser_.Set("", GetArenaForAllocation());
+  }
+#endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  // @@protoc_insertion_point(field_set_allocated:messagek.NoticeInfo.recUser)
+}
+
 #ifdef __GNUC__
   #pragma GCC diagnostic pop
 #endif  // __GNUC__
+// -------------------------------------------------------------------
+
 // -------------------------------------------------------------------
 
 // -------------------------------------------------------------------

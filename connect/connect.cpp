@@ -1,8 +1,9 @@
 #include "connect.h"
 
 ConnectManager::ConnectManager() {
-    listen_fd = -1;
+    sock_fd = listen_fd = -1;
     type = DEFAULT;
+    is_connected = true;
 }
 
 void ConnectManager::SetNONBLOCK(int fd) {
@@ -17,51 +18,9 @@ void ConnectManager::SetNONBLOCK(int fd) {
     }
 }
 
-void ConnectManager::startServer(int port) {
-//创建socket
-    sock_fd = socket(PF_INET, SOCK_STREAM | SOCK_NONBLOCK, 0);
-    if (sock_fd < 0) {
-        perror("Create socket error.");
-        exit(EXIT_FAILURE);
-    }
-    int val = 1;
-    if (setsockopt(sock_fd, SOL_SOCKET, SO_REUSEADDR, &val, sizeof(int)) < 0) {
-        perror("Setsockopt error.");
-        exit(EXIT_FAILURE);
-    }
-    //bind
-    struct sockaddr_in bind_addr{};
-    bind_addr.sin_family = AF_INET;
-    //接受任意地址
-    bind_addr.sin_addr.s_addr = htonl(INADDR_ANY);
-    bind_addr.sin_port = htons(port);
-
-    if (bind(sock_fd, (struct sockaddr *) &bind_addr, sizeof(bind_addr)) < 0) {
-        perror("Bind error.");
-        exit(EXIT_FAILURE);
-    }
-
-    //listen
-    if (listen(sock_fd, MAX_CONN_LIMIT) < 0) {
-        perror("Listen error.");
-        exit(EXIT_FAILURE);
-    }
-
-    //创建epoll
-    epoll_fd = epoll_create(MAX_CONN_LIMIT);
-    if (epoll_fd < 0) {
-        perror("Create epoll error.");
-        exit(EXIT_FAILURE);
-    }
-
-    //添加socket进入epoll
-    struct epoll_event event{};
-    event.events = EPOLLIN;
-    event.data.fd = sock_fd;
-    if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, sock_fd, &event) < 0) {
-        perror("Epoll_ctl error.");
-        exit(EXIT_FAILURE);
-    }
+void ConnectManager::startServer() {
+    startEpoll();
+    startSocket();
 }
 
 void ConnectManager::handle_accept() {
@@ -83,6 +42,11 @@ void ConnectManager::handle_accept() {
         if (!inet_ntop(AF_INET, &(client_addr.sin_addr), client_ip_str, sizeof(client_ip_str))) {
             perror("inet_ntop error.");
             exit(EXIT_FAILURE);
+        }
+        if(!is_connected){
+            std::cout << "Refuse a client from: " << client_ip_str << ", fd = " << conn_sock_fd << ".\n";
+            close(conn_sock_fd);
+            return;
         }
         std::cout << "Accept a client from: " << client_ip_str << ", fd = " << conn_sock_fd << ".\n";
         //设置为non-blocking
@@ -120,7 +84,7 @@ void ConnectManager::handle_read(int fd) {
                 return;
             }
         }
-        std::cout << "Received from client fd = " << fd << " , received Bytes = " << recv_size << ".\n";
+//        std::cout << "Received from client fd = " << fd << " , received Bytes = " << recv_size << ".\n";
         cm->offset += recv_size;
         //解包
         while (true) {
@@ -131,12 +95,13 @@ void ConnectManager::handle_read(int fd) {
                 cm->calc_data();
                 break;
             }
-            analyze_package(msg, (MessageType) package_type, len);
+            analyze_package(msg, (MessageType) package_type, len, cm);
         }
     }
 }
 
 void ConnectManager::close_client(int fd) {
+    if(fd < 0) return;
     if (epoll_ctl(epoll_fd, EPOLL_CTL_DEL, fd, nullptr) < 0) {
         perror("EPOLL_CTL_DEL error.");
         return;
@@ -146,6 +111,13 @@ void ConnectManager::close_client(int fd) {
         return;
     }
     std::cout << "Close client fd = " << fd << "\n";
+    if(fd == listen_fd) {
+        listen_fd = -1;
+        is_connected = false;
+    } else if (fd == sock_fd){
+        sock_fd = -1;
+        return;
+    }
     if (!fd2client.count(fd)) {
         fprintf(stderr, "Del client error: the client fd = %d has already deleted.\n", fd);
         return;
@@ -161,10 +133,9 @@ std::shared_ptr<ClientManager> ConnectManager::get_client(int fd) {
     return fd2client[fd];
 }
 
-void ConnectManager::add_broadcast(const std::shared_ptr<MessageInfo> &info) {
-    //tbd
-    add_frame(info);
+void ConnectManager::add_broadcast(const std::shared_ptr<MessageInfo>& info) {
     for (auto &[fd, cm]: fd2client) {
+        if(fd == listen_fd) continue;
         cm->add_info(info);
     }
 }
@@ -182,6 +153,15 @@ void ConnectManager::listenServer(const std::string &ip, int port) {
         return;
     }
     add_client(listen_fd);//添加监听服务器
+    struct epoll_event event{};
+    event.events = EPOLLIN;
+    event.data.fd = listen_fd;
+
+    if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, listen_fd, &event) == -1) {
+        perror("epoll_ctl: clientSocket");
+        close_client(listen_fd);
+        return;
+    }
     struct sockaddr_in serv_addr{};
     serv_addr.sin_family = AF_INET;
     serv_addr.sin_addr.s_addr = inet_addr(ip.c_str());
@@ -197,14 +177,9 @@ void ConnectManager::listenServer(const std::string &ip, int port) {
     } else {
         //说明connect成功
         //将监听服务器添加入epoll中
-        struct epoll_event event{};
-        event.events = EPOLLIN;  // 监听读事件
-        event.data.fd = listen_fd;
-
-        if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, listen_fd, &event) == -1) {
-            perror("epoll_ctl: clientSocket");
-            close_client(listen_fd);
-        }
+        startSocket();
+        is_connected = true;
+        std::cout << "Connect to gameServer success.";
     }
 }
 
@@ -214,61 +189,70 @@ void ConnectManager::add_client(int fd) {
         return;
     }
     fd2client[fd] = std::make_shared<ClientManager>(fd);
-    if (type == ServerType::GameServer) {
-        sync(fd);
+}
+
+void ConnectManager::analyze_package(char *msg, MessageType msg_type, int len, std::shared_ptr<ClientManager>& cm) {
+    //交给子类实现
+}
+
+void ConnectManager::close_all_clients() {//关闭所有客户端连接, 并关闭监听套接字
+    std::vector<int> fds;
+    fds.reserve(fd2client.size());
+    for(auto &[u, v] : fd2client){
+        fds.push_back(u);
+    }
+    for(auto &fd : fds){
+        close_client(fd);
+    }
+    close_client(sock_fd);
+}
+
+void ConnectManager::startSocket() {
+    if(sock_fd != -1) return;
+    //创建socket
+    sock_fd = socket(PF_INET, SOCK_STREAM | SOCK_NONBLOCK, 0);
+    if (sock_fd < 0) {
+        perror("Create socket error.");
+        exit(EXIT_FAILURE);
+    }
+    int val = 1;
+    if (setsockopt(sock_fd, SOL_SOCKET, SO_REUSEADDR, &val, sizeof(int)) < 0) {
+        perror("Setsockopt error.");
+        exit(EXIT_FAILURE);
+    }
+    //bind
+    struct sockaddr_in bind_addr{};
+    bind_addr.sin_family = AF_INET;
+    //接受任意地址
+    bind_addr.sin_addr.s_addr = htonl(INADDR_ANY);
+    bind_addr.sin_port = htons(server_port);
+
+    if (bind(sock_fd, (struct sockaddr *) &bind_addr, sizeof(bind_addr)) < 0) {
+        perror("Bind error.");
+        exit(EXIT_FAILURE);
+    }
+
+    //listen
+    if (listen(sock_fd, MAX_CONN_LIMIT) < 0) {
+        perror("Listen error.");
+        exit(EXIT_FAILURE);
+    }
+
+    //添加socket进入epoll
+    struct epoll_event event{};
+    event.events = EPOLLIN;
+    event.data.fd = sock_fd;
+    if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, sock_fd, &event) < 0) {
+        perror("Epoll_ctl error.");
+        exit(EXIT_FAILURE);
     }
 }
 
-void ConnectManager::analyze_package(char *msg, MessageType msg_type, int len) {
-    if (msg_type == MessageType::MoveInfo) {
-        messagek::MoveInfo info;
-        if (MessageUtils::deserialize(info, msg, len) < 0) {
-            std::cout << "Failed to serialize message." << std::endl;
-            return;
-        }
-        std::cout << "uid:: " << info.uid() << " horizontal:: " << info.horizontal() << " vertical:: "
-                  << info.vertical() << " is_atk:: " << info.is_atk() << "\n";
-        //需要delete
-        auto data = MessageUtils::serialize(info, msg_type, &len);
-        auto moveInfo = std::make_shared<MessageInfo>(data, len);
-        delete[] data;
-        //添加广播
-        add_broadcast(moveInfo);
-    } else if (msg_type == MessageType::LogInfo) {
-        messagek::LogInfo info;
-        if (MessageUtils::deserialize(info, msg, len) < 0) {
-            std::cout << "Failed to serialize message." << std::endl;
-            return;
-        }
-        std::cout << "username:: " << info.username() << " password:: " << info.password() << "\n";
-        info.set_password("SUCCESS");
-        //需要delete
-        auto data = MessageUtils::serialize(info, msg_type, &len);
-        auto logInfo = std::make_shared<MessageInfo>(data, len);
-        delete[] data;
-        //添加广播
-        add_broadcast(logInfo);
-    }
-}
-
-void ConnectManager::sync(int fd) {
-    auto cm = get_client(fd);
-    for (const auto &msg: frames) {
-        int ret = cm->send_data(msg);
-        if (ret < 0) {
-            perror("Handle write error.");
-            continue;
-        } else if (ret == 0) {
-            //关闭连接
-            close_client(fd);
-            printf("close sock_fd=%d done.\n", fd);
-            return;
-        }
-    }
-}
-
-void ConnectManager::add_frame(const std::shared_ptr<MessageInfo> &info) {
-    if (type == ServerType::GameServer) {
-        frames.push_back(info);
+void ConnectManager::startEpoll() {
+    //创建epoll
+    epoll_fd = epoll_create(MAX_CONN_LIMIT);
+    if (epoll_fd < 0) {
+        perror("Create epoll error.");
+        exit(EXIT_FAILURE);
     }
 }

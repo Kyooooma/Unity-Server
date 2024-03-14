@@ -14,7 +14,9 @@
 #include <arpa/inet.h>
 #include <unistd.h>
 
-static constexpr int DEFAULT_PORT = 8765;
+static constexpr int DEFAULT_GAMESERVER_PORT = 8765;
+static constexpr int DEFAULT_GATESERVER_PORT = 8766;
+static constexpr int DEFAULT_DBSERVER_PORT = 8767;
 static constexpr int MAX_CONN_LIMIT = 8;
 static constexpr int MAX_EVENTS_LIMIT = 32;
 static constexpr int BUFFER_LENGTH = 8196;

@@ -35,11 +35,11 @@ char *ClientManager::deserialize(int *package_len, int *package_type) {
         //说明不足整个包
         return nullptr;
     }
-    std::cout << "data_offset, len, cm_offset:: " << data_offset << ", " << len << ", " << offset << "\n";
+//    std::cout << "data_offset, len, cm_offset:: " << data_offset << ", " << len << ", " << offset << "\n";
     int type = MessageUtils::char2int(data + data_offset + LEN_LENGTH);// 数据包类型
     data_offset = data_offset + LEN_LENGTH + TYPE_LENGTH;
     len = len - (LEN_LENGTH + TYPE_LENGTH);// 实际数据包长度
-    std::cout << "read::" << len << " " << type << "\n";
+//    std::cout << "read::" << len << " " << type << "\n";
     *package_len = len;
     *package_type = type;
     data_offset += len;
@@ -57,8 +57,8 @@ void ClientManager::calc_data() {
 int ClientManager::send_all_message() {
     while(!dq.empty()){
         auto msg = dq.front();
-        dq.pop_front();
         int ret = send_data(msg);
+        dq.pop_front();
         if(ret < 0){
             perror("Send data error.");
             continue;

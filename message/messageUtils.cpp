@@ -15,9 +15,8 @@ int MessageUtils::char2int(const char *str) {
     return num;
 }
 
-char *MessageUtils::serialize(const google::protobuf::Message &msg, MessageType type, int *tot_len) {
+std::shared_ptr<MessageInfo> MessageUtils::serialize(const google::protobuf::Message &msg, MessageType type) {
     int len = (int)msg.ByteSizeLong();
-    //在上层调用完后delete
     char *msg_byte = new char[len + LEN_LENGTH + TYPE_LENGTH];
     if(!msg.SerializeToArray(msg_byte + LEN_LENGTH + TYPE_LENGTH, len)){
         std::cout << "Failed to serialize message." << std::endl;
@@ -26,11 +25,46 @@ char *MessageUtils::serialize(const google::protobuf::Message &msg, MessageType 
     len += LEN_LENGTH + TYPE_LENGTH;
     int2char(len, msg_byte);
     int2char(type, msg_byte + LEN_LENGTH);
-    *tot_len = len;
-    return msg_byte;
+    auto info = std::make_shared<MessageInfo>(msg_byte, len);
+    delete[] msg_byte;
+    return info;
 }
 
 int MessageUtils::deserialize(google::protobuf::Message &msg, char *data, int tot_len) {
     return msg.ParseFromArray(data, tot_len);
+}
+
+std::shared_ptr<MessageInfo> MessageUtils::set_recUser(const std::shared_ptr<MessageInfo>& info, std::string uid) {
+    int len = MessageUtils::char2int(info->msg);// 包总长度
+    int type = MessageUtils::char2int(info->msg + LEN_LENGTH);// 数据包类型
+    len = len - (LEN_LENGTH + TYPE_LENGTH);// 实际数据包长度
+    if(type == MessageType::MoveInfo){
+        messagek::MoveInfo ifo;
+        deserialize(ifo, info->msg + LEN_LENGTH + TYPE_LENGTH, len);
+        ifo.set_recuser(uid);
+        auto ret = serialize(ifo, MessageType::MoveInfo_only);
+        return ret;
+    } else if(type == MessageType::LogInfo){
+        messagek::LogInfo ifo;
+        deserialize(ifo, info->msg + LEN_LENGTH + TYPE_LENGTH, len);
+        ifo.set_recuser(uid);
+        auto ret = serialize(ifo, MessageType::LogInfo_only);
+        return ret;
+    } else if(type == MessageType::SequenceNotice){
+        messagek::SequenceNotice ifo;
+        deserialize(ifo, info->msg + LEN_LENGTH + TYPE_LENGTH, len);
+        ifo.set_recuser(uid);
+        auto ret = serialize(ifo, MessageType::SequenceNotice_only);
+        return ret;
+    } else if(type == MessageType::NoticeInfo){
+        messagek::NoticeInfo ifo;
+        deserialize(ifo, info->msg + LEN_LENGTH + TYPE_LENGTH, len);
+        ifo.set_recuser(uid);
+        auto ret = serialize(ifo, MessageType::NoticeInfo_only);
+        return ret;
+    }else{
+        std::cout << type << "\n";
+    }
+    return nullptr;
 }
 

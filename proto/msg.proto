@@ -8,13 +8,23 @@ message MoveInfo{
     int64 horizontal = 2;//AD
     int64 vertical = 3;//WS
     bool is_atk = 4;
+    string recUser = 5;
 }
 
 message LogInfo{
     string username = 1;//用户名
     string password = 2;
+    string recUser = 3;
 }
 
 message SequenceNotice{
     int32 sequence = 1;
+    string recUser = 2;
+}
+
+
+message NoticeInfo{
+    string msg = 1;
+    int32 code = 2;
+    string recUser = 3;
 }
