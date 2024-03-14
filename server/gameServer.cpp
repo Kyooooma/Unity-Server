@@ -20,19 +20,15 @@ void run() {
     while (true) {
         //响应ctrl + c
         if (setjmp(jmpbuf)) {
-            std::cout << "Break from Server Listen Loop\n";
+            std::cout << "Break from Server Listen Loop" << std::endl;
             break;
         }
         //检查与db的连接
-//        if(gameServer->listen_fd < 0){
-//            //retry
-//            std::cout << "retry link to dbServer....\n";
-//            gameServer->listenServer("127.0.0.1", DEFAULT_DBSERVER_PORT);
-//            if(gameServer->listen_fd != -1){
-//                //重发之前堆积的消息 tbd
-//
-//            }
-//        }
+        if (gameServer->listen_fd < 0) {
+            //retry
+            std::cout << "retry link to dbServer...." << std::endl;
+            gameServer->listenServer("127.0.0.1", DEFAULT_DBSERVER_PORT);
+        }
 
         //每次循环调用依次epoll_wait侦听
         int cnt = epoll_wait(gameServer->epoll_fd, events, MAX_EVENTS_LIMIT, EPOLL_TIMEOUT);
@@ -72,6 +68,13 @@ void run() {
                 gameServer->close_client(fd);
                 continue;
             }
+            if(!gameServer->is_connected){
+                if(fd == gameServer->listen_fd){
+                    std::cout << "Connect to dbServer success." << std::endl;
+                    gameServer->is_connected = true;
+                    continue;
+                }
+            }
             if (fd == gameServer->sock_fd) {
                 //accept所有client连接请求
                 gameServer->handle_accept();
@@ -87,8 +90,7 @@ int main(int argc, char *argv[]) {
     signal(SIGINT, sigint_handler);
 
     gameServer->startServer();
-
-//    gameServer->listenServer("127.0.0.1", DEFAULT_DBSERVER_PORT);
+    gameServer->listenServer("127.0.0.1", DEFAULT_DBSERVER_PORT);
 
     run();
 

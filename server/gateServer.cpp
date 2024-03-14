@@ -3,7 +3,6 @@
 #include "connect/gateConnect.h"
 
 static jmp_buf jmpbuf;
-int curFrame = 0;
 const int TIMEOUT = 5;
 
 void sigint_handler(int signo) {
@@ -16,8 +15,6 @@ auto gateServer = std::make_unique<GateConnectManager>();
 void run() {
     struct epoll_event events[MAX_EVENTS_LIMIT];
     memset(events, 0, sizeof(events));
-    messagek::SequenceNotice frameNotice;
-    auto lastExecutionTime = std::chrono::high_resolution_clock::now();
     while (true) {
         //响应ctrl + c
         if (setjmp(jmpbuf)) {

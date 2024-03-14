@@ -31,7 +31,7 @@ struct ConnectManager{
 
     void handle_read(int fd); //接受客户端的数据
 
-    void close_client(int fd); //关闭客户端连接
+    virtual void close_client(int fd); //关闭客户端连接
 
     std::shared_ptr<ClientManager> get_client(int fd);
 

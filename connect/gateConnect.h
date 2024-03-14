@@ -12,5 +12,9 @@ struct GateConnectManager : ConnectManager{
     void add_user(const std::string& uid, int fd);
 
     void del_user(const std::string & uid);
+
+    void close_client(int fd) override;
+
+    void send_logout(std::string uid);
 };
 #endif //UNITY_SERVER_GATECONNECT_H

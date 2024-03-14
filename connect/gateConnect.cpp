@@ -19,6 +19,8 @@ void GateConnectManager::analyze_package(char *msg, MessageType msg_type, int le
             uid = ifo.recuser();
             if(ifo.code() == MessageCode::LogInError){
                 should_del = true;
+            } else if (ifo.code() == MessageCode::LogOut){
+                should_del = true;
             }
             std::cout << "NoticeInfo_only msg:: " << ifo.msg() << " uid:: " << ifo.recuser() << "\n";
             info = MessageUtils::serialize(ifo, MessageType::NoticeInfo);
@@ -52,6 +54,7 @@ void GateConnectManager::analyze_package(char *msg, MessageType msg_type, int le
                 return;
             }
             auto target = get_client(uid2fd[uid]);
+            if(target == nullptr) return;
             target->add_info(info);
             if(should_del){
                 del_user(uid);
@@ -66,6 +69,7 @@ void GateConnectManager::analyze_package(char *msg, MessageType msg_type, int le
             messagek::LogInfo ifo;
             MessageUtils::deserialize(ifo, msg, len);
             add_user(ifo.username(), cm->fd);
+            cm->uid = ifo.username();
             std::cout << ifo.username() << " " << ifo.password() << "\n";
         }
         auto gameserver = get_client(listen_fd);
@@ -89,5 +93,45 @@ void GateConnectManager::del_user(const std::string &uid) {
         std::cout << "Uid:: " << uid << " not found!!\n";
         return;
     }
+    int fd = uid2fd[uid];
+    auto cm = get_client(fd);
     uid2fd.erase(uid);
+    cm->uid.clear();
+}
+
+void GateConnectManager::close_client(int fd) {
+    if(fd < 0) return;
+    if (epoll_ctl(epoll_fd, EPOLL_CTL_DEL, fd, nullptr) < 0) {
+        perror("EPOLL_CTL_DEL error.");
+        return;
+    }
+    if (close(fd) < 0) {
+        perror("Close client error.");
+        return;
+    }
+    std::cout << "Close client fd = " << fd << "\n";
+    if(fd == listen_fd) {
+        listen_fd = -1;
+        is_connected = false;
+    } else if (fd == sock_fd){
+        sock_fd = -1;
+        return;
+    }
+    if (!fd2client.count(fd)) {
+        fprintf(stderr, "Del client error: the client fd = %d has already deleted.\n", fd);
+        return;
+    }
+    auto cm = fd2client[fd];
+    send_logout(cm->uid);
+    fd2client.erase(fd);
+}
+
+void GateConnectManager::send_logout(std::string uid) {
+    auto listenServer = get_client(listen_fd);
+    if(listenServer == nullptr) return;
+    messagek::NoticeInfo info;
+    info.set_msg(uid);
+    info.set_code(MessageCode::LogOut);
+    auto data = MessageUtils::serialize(info, MessageType::NoticeInfo);
+    listenServer->add_info(data);
 }

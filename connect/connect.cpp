@@ -43,11 +43,6 @@ void ConnectManager::handle_accept() {
             perror("inet_ntop error.");
             exit(EXIT_FAILURE);
         }
-        if(!is_connected){
-            std::cout << "Refuse a client from: " << client_ip_str << ", fd = " << conn_sock_fd << ".\n";
-            close(conn_sock_fd);
-            return;
-        }
         std::cout << "Accept a client from: " << client_ip_str << ", fd = " << conn_sock_fd << ".\n";
         //设置为non-blocking
         SetNONBLOCK(conn_sock_fd);
@@ -179,7 +174,7 @@ void ConnectManager::listenServer(const std::string &ip, int port) {
         //将监听服务器添加入epoll中
         startSocket();
         is_connected = true;
-        std::cout << "Connect to gameServer success.";
+        std::cout << "Connect to listenServer success.";
     }
 }
 

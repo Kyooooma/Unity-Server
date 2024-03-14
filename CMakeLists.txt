@@ -10,7 +10,7 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -O2")
 
 # 添加包含文件目录
-include_directories(proto message client connect server)
+include_directories(proto db message client connect server)
 
 # 手动添加 Protobuf 源文件
 set(PROTO_SRCS proto/msg.pb.cc)
@@ -23,6 +23,10 @@ set(SOURCES
         connect/connect.cpp
         connect/gameConnect.cpp
         connect/gateConnect.cpp
+)
+
+set(DB_SOURCES
+        db/dbUtils.cpp
         connect/dbConnect.cpp
 )
 
@@ -33,5 +37,5 @@ target_link_libraries(game protobuf)
 add_executable(gate ${SOURCES} server/gateServer.cpp ${PROTO_SRCS})
 target_link_libraries(gate protobuf)
 
-add_executable(db ${SOURCES} server/dbServer.cpp ${PROTO_SRCS})
-target_link_libraries(db protobuf)
+add_executable(db ${SOURCES} ${DB_SOURCES} server/dbServer.cpp ${PROTO_SRCS})
+target_link_libraries(db protobuf mysqlcppconn hiredis)

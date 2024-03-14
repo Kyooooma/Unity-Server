@@ -10,6 +10,7 @@ struct ClientManager{
     int offset;// 总偏移量
     int data_offset;// 已解包的偏移量
     int fd;// 客户端的fd
+    std::string uid;
     std::deque<std::shared_ptr<MessageInfo>> dq;
 
     explicit ClientManager(int fd);

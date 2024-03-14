@@ -19,10 +19,12 @@ OBJECT_GATE = $(BUILD_DIR)/connect/gateConnect.o \
               $(BUILD_DIR)/server/gateServer.o
 
 OBJECT_DB = $(BUILD_DIR)/connect/dbConnect.o \
-              $(BUILD_DIR)/server/dbServer.o
+              $(BUILD_DIR)/server/dbServer.o \
+              $(BUILD_DIR)/db/dbUtils.o \
 
 # 链接选项
 LDFLAGS = -lprotobuf
+DBFLAGS = -lmysqlcppconn -lhiredis
 
 all: game gate db
 
