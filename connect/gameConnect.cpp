@@ -3,6 +3,7 @@
 GameConnectManager::GameConnectManager() {
     type = GameServer;
     server_port = DEFAULT_GAMESERVER_PORT;
+    logManager.open(Log_game);
 }
 
 void GameConnectManager::add_frame(const std::shared_ptr<MessageInfo> &info) {//加入追帧消息
@@ -10,7 +11,8 @@ void GameConnectManager::add_frame(const std::shared_ptr<MessageInfo> &info) {//
 }
 
 void GameConnectManager::sync(std::shared_ptr<ClientManager> &cm, const std::string &uid) {
-    std::cout << "sync:: uid:: " << uid << "\n";
+//    logManager.logToFile("sync:: uid::" + uid);
+//    std::cout << "sync:: uid:: " << uid << "\n";
     for (const auto &msg: frames) {
         auto data = MessageUtils::set_recUser(msg, uid);
         cm->add_info(data);
@@ -37,7 +39,7 @@ void GameConnectManager::analyze_package(char *msg, MessageType msg_type, int le
                 std::cout << "Failed to serialize message." << std::endl;
                 return;
             }
-            std::cout << "username:: " << info.username() << " password:: " << info.password() << "\n";
+//            std::cout << "username:: " << info.username() << " password:: " << info.password() << "\n";
             info.set_recuser(std::to_string(cm->fd));
 
             auto logInfo = MessageUtils::serialize(info, MessageType::LogInfo);
@@ -71,6 +73,7 @@ void GameConnectManager::analyze_package(char *msg, MessageType msg_type, int le
                 auto logInfo = MessageUtils::serialize(info, MessageType::NoticeInfo);
                 //登录成功之后发送追帧消息
                 auto recv = get_client(atoi(info.recuser().c_str()));
+                logManager.logToFile("login success, uid:: " + (std::string)info.msg());
                 if(recv == nullptr) return;
                 info.set_recuser(info.msg());
                 sync(recv, info.msg());
@@ -78,6 +81,7 @@ void GameConnectManager::analyze_package(char *msg, MessageType msg_type, int le
                 add_broadcast(logInfo);
                 add_frame(logInfo);
             }else{
+                logManager.logToFile("login error, uid:: " + (std::string)info.msg());
                 info.set_recuser(info.msg());
                 auto logInfo = MessageUtils::serialize(info, MessageType::NoticeInfo_only);
                 //添加广播

@@ -3,6 +3,7 @@
 DBConnectManager::DBConnectManager() {
     type = DBServer;
     server_port = DEFAULT_DBSERVER_PORT;
+    logManager.open(Log_db);
 }
 
 void DBConnectManager::analyze_package(char *msg, MessageType msg_type, int len, std::shared_ptr<ClientManager> &cm) {
@@ -12,7 +13,8 @@ void DBConnectManager::analyze_package(char *msg, MessageType msg_type, int len,
             std::cout << "Failed to serialize message." << std::endl;
             return;
         }
-        std::cout << "username:: " << info.username() << " password:: " << info.password() << "\n";
+        logManager.logToFile("username:: " + info.username() + " password:: " + info.password());
+//        std::cout << "username:: " << info.username() << " password:: " << info.password() << "\n";
         //校验tbd
         auto ok = db.login(info.username(), info.password());
         messagek::NoticeInfo noticeInfo;
@@ -20,10 +22,12 @@ void DBConnectManager::analyze_package(char *msg, MessageType msg_type, int len,
         noticeInfo.set_msg(info.username());
         if(ok){
             //login success
-            std::cout << "login success.\n";
+            logManager.logToFile("uid:: " + info.username() + " login success.");
+//            std::cout << "login success.\n";
             noticeInfo.set_code(MessageCode::LogInSuccess);
         }else{
             //login error
+            logManager.logToFile("uid:: " + info.username() + " login error.");
             noticeInfo.set_code(MessageCode::LogInError);
         }
         auto logInfo = MessageUtils::serialize(noticeInfo, MessageType::NoticeInfo);

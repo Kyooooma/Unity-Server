@@ -4,7 +4,9 @@
 #include "../common/config.h"
 #include "unordered_map"
 #include "../client/client.h"
+#include "log/logmanager.h"
 #include "vector"
+
 
 //作为一个基类
 struct ConnectManager{
@@ -12,8 +14,8 @@ struct ConnectManager{
     int listen_fd{}; //监听的服务器fd
     bool is_connected{};
     std::unordered_map<int, std::shared_ptr<ClientManager>> fd2client;
-
     int sock_fd{}, epoll_fd{}, server_port{};
+    LogManager logManager;//记得初始化
 
     ConnectManager();
 

@@ -4,6 +4,7 @@ GateConnectManager::GateConnectManager() {
     type = GateServer;
     is_connected = false;
     server_port = DEFAULT_GATESERVER_PORT;
+    logManager.open(Log_gate);
 }
 
 void GateConnectManager::analyze_package(char *msg, MessageType msg_type, int len, std::shared_ptr<ClientManager> &cm) {
@@ -22,7 +23,8 @@ void GateConnectManager::analyze_package(char *msg, MessageType msg_type, int le
             } else if (ifo.code() == MessageCode::LogOut){
                 should_del = true;
             }
-            std::cout << "NoticeInfo_only msg:: " << ifo.msg() << " uid:: " << ifo.recuser() << "\n";
+            logManager.logToFile("NoticeInfo_only msg:: " + ifo.msg() + " uid:: " + ifo.recuser());
+//            std::cout << "NoticeInfo_only msg:: " << ifo.msg() << " uid:: " << ifo.recuser() << "\n";
             info = MessageUtils::serialize(ifo, MessageType::NoticeInfo);
         } else if (msg_type == MessageType::SequenceNotice_only) {
             is = true;
@@ -70,7 +72,7 @@ void GateConnectManager::analyze_package(char *msg, MessageType msg_type, int le
             MessageUtils::deserialize(ifo, msg, len);
             add_user(ifo.username(), cm->fd);
             cm->uid = ifo.username();
-            std::cout << ifo.username() << " " << ifo.password() << "\n";
+//            std::cout << ifo.username() << " " << ifo.password() << "\n";
         }
         auto gameserver = get_client(listen_fd);
         if(gameserver == nullptr){
@@ -123,6 +125,7 @@ void GateConnectManager::close_client(int fd) {
     }
     auto cm = fd2client[fd];
     send_logout(cm->uid);
+    del_user(cm->uid);
     fd2client.erase(fd);
 }
 
