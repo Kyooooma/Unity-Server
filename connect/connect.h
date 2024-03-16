@@ -27,17 +27,15 @@ struct ConnectManager{
 
     void listenServer(const std::string& ip, int port); //监听服务器
 
-    void add_client(int fd); //新建一个客户端信息
-
-    void handle_accept(); //接受新的客户端连接
-
-    void handle_read(int fd); //接受客户端的数据
+    virtual void add_client(int fd); //新建一个客户端信息
 
     virtual void close_client(int fd); //关闭客户端连接
 
-    std::shared_ptr<ClientManager> get_client(int fd);
+    void handle_accept(); //接受新的客户端连接
 
-    virtual void add_broadcast(const std::shared_ptr<MessageInfo>& info); //添加广播事件
+    int handle_read(int fd); //接受客户端的数据 0-需要關閉
+
+    std::shared_ptr<ClientManager> get_client(int fd);
 
     void broadcast(); //广播
 

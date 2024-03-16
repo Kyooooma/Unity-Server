@@ -11,20 +11,9 @@
 #include "message/messageUtils.h"
 #include "proto/msg.pb.h"
 
-struct Qps {
-    Qps() {
-        last_time = time(NULL);
-        succ_cnt = 0;
-    }
-
-    long last_time;//最后一次发包时间 ms为单位
-    int succ_cnt; //成功收到服务器回显的次数
-};
-
 // 模拟用户登录请求
-void login() {
-//    Qps qps;
-    std::string username;
+void login(int id) {
+    std::string username = std::to_string(id);
     // 创建套接字
     int client_socket = socket(AF_INET, SOCK_STREAM, 0);
     if (client_socket == -1) {
@@ -45,18 +34,10 @@ void login() {
         close(client_socket);
         return;
     }
-    for (int i = 1; i <= 20; i++) {
-//        long current_time = time(NULL);
-//        if (current_time - qps.last_time >= 1) {
-//            //如果当前时间比最后记录时间大于1秒，那么进行记录
-//            printf("---> qps = %d <----\n", qps.succ_cnt);
-//            qps.last_time = current_time;//记录最后时间
-//            qps.succ_cnt = 0;//清空成功次数
-//        }
+    auto lastExecutionTime = std::chrono::high_resolution_clock::now();
+    for (int i = 1; i <= 1; i++) {
 
         auto cm = std::make_shared<ClientManager>(client_socket);
-        username = std::to_string(i);
-//        std::cout << "username=" << username << std::endl;
         // 发送消息给服务器
         messagek::LogInfo info;
         info.set_recuser(username);
@@ -69,12 +50,8 @@ void login() {
             close(client_socket);
             return;
         }
-//        std::cout << "Message sent to server." << std::endl;
-
-        bool ok = false;
 
         while (true) {
-            if(ok) break;
             int recv_size = cm->read_data();
 
             if (recv_size == 0) {
@@ -93,7 +70,6 @@ void login() {
                     break;
                 }
             }
-//        std::cout << "Received from client fd = " << fd << " , received Bytes = " << recv_size << ".\n";
             cm->offset += recv_size;
             //解包
             while (true) {
@@ -104,7 +80,6 @@ void login() {
                     cm->calc_data();
                     break;
                 }
-//                qps.succ_cnt += 1;
                 if (package_type == MessageType::NoticeInfo) {
                     messagek::NoticeInfo notice;
                     MessageUtils::deserialize(notice, msg, len);
@@ -112,8 +87,11 @@ void login() {
 //                              << notice.recuser() << "\n";
                     //接受到自己的登录消息
                     if (notice.msg() == username){
-                        ok = true;
-                        break;
+                        auto currentTime = std::chrono::high_resolution_clock::now();
+                        auto elapsedMilliseconds = std::chrono::duration_cast<std::chrono::milliseconds>(
+                                currentTime - lastExecutionTime).count();
+                        std::cout << "cost:: " << elapsedMilliseconds << ".\n";
+                        return;
                     }
                 }
             }
@@ -124,22 +102,22 @@ void login() {
 
 int main() {
     // 设置并发用户数
-    const int num_users = 1000;
+    const int num_users = 500;
     std::vector<std::thread> threads;
+    std::atomic<int> user_id(1);
 
     // 创建多个线程模拟用户登录
     threads.reserve(num_users);
     for (int i = 0; i < num_users; ++i) {
-        threads.emplace_back([]() {
-            login();
+        threads.emplace_back([&user_id]() {
+            int id = user_id++;
+            login(id);
         });
     }
 
     for (auto &thread: threads) {
         thread.join();
     }
-
-    login();
 
     return 0;
 }

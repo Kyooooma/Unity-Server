@@ -71,7 +71,10 @@ void run() {
                 gateServer->handle_accept();
             } else if (event.events & EPOLLIN) {
                 //读取数据
-                gateServer->handle_read(fd);
+                int ret = gateServer->handle_read(fd);
+                if(ret == 0){
+                    gateServer->close_client(fd);
+                }
             }
         }
     }

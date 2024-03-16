@@ -52,7 +52,10 @@ void run() {
                 dbServer->handle_accept();
             } else if (event.events & EPOLLIN) {
                 //读取数据
-                dbServer->handle_read(fd);
+                int ret = dbServer->handle_read(fd);
+                if(ret == 0){
+                    dbServer->close_client(fd);
+                }
             }
         }
     }

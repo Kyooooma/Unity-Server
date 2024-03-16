@@ -62,7 +62,8 @@ void GateConnectManager::analyze_package(char *msg, MessageType msg_type, int le
                 del_user(uid);
             }
         }else{
-            add_broadcast(info);
+            std::cout << "dbg:: \n";
+//            add_broadcast(info);
         }
     }else{
         info = std::make_shared<MessageInfo>(msg - LEN_LENGTH - TYPE_LENGTH, len + LEN_LENGTH + TYPE_LENGTH);
@@ -72,7 +73,7 @@ void GateConnectManager::analyze_package(char *msg, MessageType msg_type, int le
             MessageUtils::deserialize(ifo, msg, len);
             add_user(ifo.username(), cm->fd);
             cm->uid = ifo.username();
-//            std::cout << ifo.username() << " " << ifo.password() << "\n";
+            std::cout << ifo.username() << " " << ifo.password() << "\n";
         }
         auto gameserver = get_client(listen_fd);
         if(gameserver == nullptr){
@@ -112,10 +113,7 @@ void GateConnectManager::close_client(int fd) {
         return;
     }
     std::cout << "Close client fd = " << fd << "\n";
-    if(fd == listen_fd) {
-        listen_fd = -1;
-        is_connected = false;
-    } else if (fd == sock_fd){
+    if (fd == sock_fd){
         sock_fd = -1;
         return;
     }
@@ -123,13 +121,19 @@ void GateConnectManager::close_client(int fd) {
         fprintf(stderr, "Del client error: the client fd = %d has already deleted.\n", fd);
         return;
     }
-    auto cm = fd2client[fd];
-    send_logout(cm->uid);
-    del_user(cm->uid);
+    if(fd == listen_fd) {
+        listen_fd = -1;
+        is_connected = false;
+    } else{
+        auto cm = fd2client[fd];
+        send_logout(cm->uid);
+        del_user(cm->uid);
+    }
     fd2client.erase(fd);
 }
 
 void GateConnectManager::send_logout(std::string uid) {
+    if(listen_fd < 0) return;
     auto listenServer = get_client(listen_fd);
     if(listenServer == nullptr) return;
     messagek::NoticeInfo info;

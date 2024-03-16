@@ -31,10 +31,10 @@ databaseManager::~databaseManager() {
 }
 
 bool databaseManager::login(const std::string& username, const std::string& password) {
-    if(loged_users.count(username)){
-        std::cout << "user " << username << " already loged!!\n";
-        return false;
-    }
+//    if(loged_users.count(username)){
+//        std::cout << "user " << username << " already loged!!\n";
+//        return false;
+//    }
     std::string pwd;
     if(getKey(username, pwd) == 1){
         //说明在缓存中

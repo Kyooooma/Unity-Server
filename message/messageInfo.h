@@ -17,7 +17,8 @@ enum MessageType {
 enum MessageCode{
     LogInSuccess = 200,
     LogInError = 403,
-    LogOut = 114
+    LogOut = 114,
+    ConnectSuccess
 };
 
 //序列化完成的帧数据

@@ -57,8 +57,12 @@ void ClientManager::calc_data() {
 int ClientManager::send_all_message() {
     while(!dq.empty()){
         auto msg = dq.front();
-        int ret = send_data(msg);
         dq.pop_front();
+        if(msg == nullptr){
+            std::cout << "msg is nullptr.\n";
+            continue;
+        }
+        int ret = send_data(msg);
         if(ret < 0){
             perror("Send data error.");
             continue;

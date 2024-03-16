@@ -2,6 +2,7 @@
 
 GameConnectManager::GameConnectManager() {
     type = GameServer;
+    is_connected = false;
     server_port = DEFAULT_GAMESERVER_PORT;
     logManager.open(Log_game);
 }
@@ -31,7 +32,7 @@ void GameConnectManager::analyze_package(char *msg, MessageType msg_type, int le
                       << info.vertical() << " is_atk:: " << info.is_atk() << "\n";
             auto moveInfo = MessageUtils::serialize(info, msg_type);
             //添加广播
-            add_broadcast(moveInfo);
+            add_broadcast(moveInfo, cm);
             add_frame(moveInfo);
         } else if (msg_type == MessageType::LogInfo) {
             messagek::LogInfo info;
@@ -54,6 +55,7 @@ void GameConnectManager::analyze_package(char *msg, MessageType msg_type, int le
                 std::cout << "Failed to serialize message." << std::endl;
                 return;
             }
+            info.set_recuser(std::to_string(cm->fd));
             auto logoutInfo = MessageUtils::serialize(info, MessageType::NoticeInfo);
             auto dbserver = get_client(listen_fd);
             if (dbserver == nullptr) {
@@ -77,17 +79,83 @@ void GameConnectManager::analyze_package(char *msg, MessageType msg_type, int le
                 if(recv == nullptr) return;
                 info.set_recuser(info.msg());
                 sync(recv, info.msg());
+                add_user(info.msg(), recv->fd);
                 //添加广播
-                add_broadcast(logInfo);
+                add_broadcast(logInfo, recv);
                 add_frame(logInfo);
-            }else{
+            }else if (info.code() == MessageCode::LogInError){
                 logManager.logToFile("login error, uid:: " + (std::string)info.msg());
+                auto recv = get_client(atoi(info.recuser().c_str()));
+                if(recv == nullptr) return;
                 info.set_recuser(info.msg());
-                auto logInfo = MessageUtils::serialize(info, MessageType::NoticeInfo_only);
+                auto logerrorInfo = MessageUtils::serialize(info, MessageType::NoticeInfo_only);
+                recv->add_info(logerrorInfo);
+            }else if(info.code() == MessageCode::LogOut){
+                logManager.logToFile("log out, uid:: " + (std::string)info.msg());
+                auto recv = get_client(atoi(info.recuser().c_str()));
+                if(recv == nullptr) return;
+                info.set_recuser(info.msg());
+                auto logInfo = MessageUtils::serialize(info, MessageType::NoticeInfo);
                 //添加广播
-                add_broadcast(logInfo);
+                add_broadcast(logInfo, recv);
+                del_user(info.msg(), recv->fd);
+            } else if(info.code() == MessageCode::ConnectSuccess){
+                //
             }
         }
+    }
+}
+
+void GameConnectManager::add_broadcast(const std::shared_ptr<MessageInfo> &info, std::shared_ptr<ClientManager> &cm) {
+    if(!gate_fd2log_uid.count(cm->fd)){
+        std::cout << "gate_fd not found!!\n";
+        return;
+    }
+    auto log_uid = gate_fd2log_uid[cm->fd];
+    for(const auto& uid : log_uid){
+        auto data = MessageUtils::set_recUser(info, uid);
+        cm->add_info(data);
+    }
+}
+
+void GameConnectManager::add_user(const std::string& user, int gate_fd) {
+    if(!gate_fd2log_uid.count(gate_fd)){
+        std::cout << "gate_fd not found!!\n";
+        return;
+    }
+    gate_fd2log_uid[gate_fd].insert(user);
+}
+
+void GameConnectManager::del_user(const std::string &user, int gate_fd) {
+    if(!gate_fd2log_uid.count(gate_fd)){
+        std::cout << "gate_fd not found!!\n";
+        return;
+    }
+    gate_fd2log_uid[gate_fd].erase(user);
+}
+
+void GameConnectManager::add_client(int fd) {
+    ConnectManager::add_client(fd);
+    if (gate_fd2log_uid.count(fd)) {
+        fprintf(stderr, "Add client error: the client fd = %d has already added.\n", fd);
+        return;
+    }
+    gate_fd2log_uid[fd] = std::unordered_set<std::string>();
+}
+
+void GameConnectManager::close_client(int fd) {
+    ConnectManager::close_client(fd);
+    if (!gate_fd2log_uid.count(fd)) {
+        fprintf(stderr, "Del client error: the client fd = %d has already deleted.\n", fd);
+        return;
+    }
+    gate_fd2log_uid.erase(fd);
+}
+
+void GameConnectManager::add_broadcast(const std::shared_ptr<MessageInfo> &info) {
+    for(auto &[fd, cm] : fd2client){
+        if(fd == listen_fd) continue;
+        add_broadcast(info, cm);
     }
 }
 

@@ -72,6 +72,7 @@ void run() {
                 if(fd == gameServer->listen_fd){
                     std::cout << "Connect to dbServer success." << std::endl;
                     gameServer->is_connected = true;
+                }else{
                     continue;
                 }
             }
@@ -80,7 +81,10 @@ void run() {
                 gameServer->handle_accept();
             } else if (event.events & EPOLLIN) {
                 //读取数据
-                gameServer->handle_read(fd);
+                int ret = gameServer->handle_read(fd);
+                if(ret == 0){
+                    gameServer->close_client(fd);
+                }
             }
         }
     }

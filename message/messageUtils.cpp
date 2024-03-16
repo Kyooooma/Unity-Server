@@ -63,7 +63,7 @@ std::shared_ptr<MessageInfo> MessageUtils::set_recUser(const std::shared_ptr<Mes
         auto ret = serialize(ifo, MessageType::NoticeInfo_only);
         return ret;
     }else{
-        std::cout << type << "\n";
+        std::cout << "type not found:: " <<  type << "\n";
     }
     return nullptr;
 }

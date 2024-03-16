@@ -36,12 +36,12 @@ void ConnectManager::handle_accept() {
                 break;
             } else {
                 perror("accept error.");
-                exit(EXIT_FAILURE);
+                return;
             }
         }
         if (!inet_ntop(AF_INET, &(client_addr.sin_addr), client_ip_str, sizeof(client_ip_str))) {
             perror("inet_ntop error.");
-            exit(EXIT_FAILURE);
+            return;
         }
         std::cout << "Accept a client from: " << client_ip_str << ", fd = " << conn_sock_fd << ".\n";
         //设置为non-blocking
@@ -57,26 +57,24 @@ void ConnectManager::handle_accept() {
     }
 }
 
-void ConnectManager::handle_read(int fd) {
+int ConnectManager::handle_read(int fd) {
     auto cm = get_client(fd);
-    if (cm == nullptr) return;
+    if (cm == nullptr) return 1;
     while (true) {
         int recv_size = cm->read_data();
 
         if (recv_size == 0) {
             //关闭连接
-            close_client(fd);
-            printf("close sock_fd=%d done.\n", fd);
-            return;
+            return 0;
         }
 
         if (recv_size < 0) {
             if ((errno == EAGAIN) || (errno == EWOULDBLOCK)) {
                 //说明读完了
-                return;
+                return 1;
             } else {
                 perror("read error.");
-                return;
+                return 1;
             }
         }
 //        std::cout << "Received from client fd = " << fd << " , received Bytes = " << recv_size << ".\n";
@@ -128,13 +126,6 @@ std::shared_ptr<ClientManager> ConnectManager::get_client(int fd) {
     return fd2client[fd];
 }
 
-void ConnectManager::add_broadcast(const std::shared_ptr<MessageInfo>& info) {
-    for (auto &[fd, cm]: fd2client) {
-        if(fd == listen_fd) continue;
-        cm->add_info(info);
-    }
-}
-
 void ConnectManager::broadcast() {
     for (auto &[fd, cm]: fd2client) {
         cm->send_all_message();
@@ -164,6 +155,7 @@ void ConnectManager::listenServer(const std::string &ip, int port) {
     if (connect(listen_fd, (struct sockaddr *) &serv_addr, sizeof(serv_addr)) < 0) {
         if (errno == EINPROGRESS) {
             // 连接正在进行中，稍后使用 epoll 等待连接完成
+            std::cout << "wait to listen server.\n";
         } else {
             perror("Connection failed");
             close_client(listen_fd);
@@ -174,7 +166,7 @@ void ConnectManager::listenServer(const std::string &ip, int port) {
         //将监听服务器添加入epoll中
         startSocket();
         is_connected = true;
-        std::cout << "Connect to listenServer success.";
+        std::cout << "Connect to listenServer success.\n";
     }
 }
 
@@ -183,7 +175,12 @@ void ConnectManager::add_client(int fd) {
         fprintf(stderr, "Add client error: the client fd = %d has already added.\n", fd);
         return;
     }
-    fd2client[fd] = std::make_shared<ClientManager>(fd);
+    auto cm = std::make_shared<ClientManager>(fd);
+    messagek::NoticeInfo info;
+    info.set_code(MessageCode::ConnectSuccess);
+    auto data = MessageUtils::serialize(info, MessageType::NoticeInfo);
+    cm->add_info(data);
+    fd2client[fd] = cm;
 }
 
 void ConnectManager::analyze_package(char *msg, MessageType msg_type, int len, std::shared_ptr<ClientManager>& cm) {
