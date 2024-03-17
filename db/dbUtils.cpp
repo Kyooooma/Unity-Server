@@ -92,7 +92,7 @@ void databaseManager::logout(const std::string &username) {
 }
 
 void databaseManager::setKey(const std::string &username, const std::string &password) {
-    std::string cmd = "SET " + username + " " + password + " EX " + std::to_string(rng(20, 60));
+    std::string cmd = "SET " + username + " " + password + " EX " + std::to_string(rng(200, 600));
     auto reply = (redisReply *)redisCommand(context, cmd.c_str());
     if (reply == nullptr) {
         std::cerr << "Error executing SET command" << std::endl;

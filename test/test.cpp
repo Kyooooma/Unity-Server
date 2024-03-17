@@ -34,7 +34,6 @@ void login(int id) {
         close(client_socket);
         return;
     }
-    auto lastExecutionTime = std::chrono::high_resolution_clock::now();
     for (int i = 1; i <= 1; i++) {
 
         auto cm = std::make_shared<ClientManager>(client_socket);
@@ -87,10 +86,6 @@ void login(int id) {
 //                              << notice.recuser() << "\n";
                     //接受到自己的登录消息
                     if (notice.msg() == username){
-                        auto currentTime = std::chrono::high_resolution_clock::now();
-                        auto elapsedMilliseconds = std::chrono::duration_cast<std::chrono::milliseconds>(
-                                currentTime - lastExecutionTime).count();
-                        std::cout << "cost:: " << elapsedMilliseconds << ".\n";
                         return;
                     }
                 }
@@ -102,9 +97,11 @@ void login(int id) {
 
 int main() {
     // 设置并发用户数
-    const int num_users = 500;
+    const int num_users = 1000;
     std::vector<std::thread> threads;
     std::atomic<int> user_id(1);
+
+    auto lastExecutionTime = std::chrono::high_resolution_clock::now();
 
     // 创建多个线程模拟用户登录
     threads.reserve(num_users);
@@ -118,6 +115,10 @@ int main() {
     for (auto &thread: threads) {
         thread.join();
     }
+    auto currentTime = std::chrono::high_resolution_clock::now();
+    auto elapsedMilliseconds = std::chrono::duration_cast<std::chrono::milliseconds>(
+            currentTime - lastExecutionTime).count();
+    std::cout << "cost:: " << elapsedMilliseconds << ".\n";
 
     return 0;
 }

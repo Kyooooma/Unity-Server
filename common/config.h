@@ -17,8 +17,8 @@
 static constexpr int DEFAULT_GAMESERVER_PORT = 8765;
 static constexpr int DEFAULT_GATESERVER_PORT = 8766;
 static constexpr int DEFAULT_DBSERVER_PORT = 8767;
-static constexpr int MAX_CONN_LIMIT = 1024;
-static constexpr int MAX_EVENTS_LIMIT = 1024;
+static constexpr int MAX_CONN_LIMIT = 8196;
+static constexpr int MAX_EVENTS_LIMIT = 8196;
 static constexpr int BUFFER_LENGTH = 8196;
 static constexpr int DATA_LENGTH = 8196;
 static constexpr int EPOLL_TIMEOUT = 33;

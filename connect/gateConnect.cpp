@@ -18,10 +18,12 @@ void GateConnectManager::analyze_package(char *msg, MessageType msg_type, int le
             messagek::NoticeInfo ifo;
             MessageUtils::deserialize(ifo, msg, len);
             uid = ifo.recuser();
-            if(ifo.code() == MessageCode::LogInError){
-                should_del = true;
-            } else if (ifo.code() == MessageCode::LogOut){
-                should_del = true;
+            if(uid == ifo.msg()){
+                if(ifo.code() == MessageCode::LogInError){
+                    should_del = true;
+                } else if (ifo.code() == MessageCode::LogOut){
+                    should_del = true;
+                }
             }
             logManager.logToFile("NoticeInfo_only msg:: " + ifo.msg() + " uid:: " + ifo.recuser());
 //            std::cout << "NoticeInfo_only msg:: " << ifo.msg() << " uid:: " << ifo.recuser() << "\n";
