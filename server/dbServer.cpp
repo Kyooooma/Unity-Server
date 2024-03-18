@@ -66,6 +66,7 @@ int main(int argc, char *argv[]) {
 
     dbServer->startServer();
     dbServer->db.init_link();
+//    dbServer->db.init_data();
 
     run();
 

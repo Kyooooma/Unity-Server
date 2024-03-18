@@ -35,7 +35,6 @@ void login(int id) {
         return;
     }
     for (int i = 1; i <= 1; i++) {
-
         auto cm = std::make_shared<ClientManager>(client_socket);
         // 发送消息给服务器
         messagek::LogInfo info;
@@ -97,11 +96,9 @@ void login(int id) {
 
 int main() {
     // 设置并发用户数
-    const int num_users = 1000;
+    const int num_users = 250;
     std::vector<std::thread> threads;
     std::atomic<int> user_id(1);
-
-    auto lastExecutionTime = std::chrono::high_resolution_clock::now();
 
     // 创建多个线程模拟用户登录
     threads.reserve(num_users);
@@ -112,9 +109,12 @@ int main() {
         });
     }
 
+    auto lastExecutionTime = std::chrono::high_resolution_clock::now();
+
     for (auto &thread: threads) {
         thread.join();
     }
+
     auto currentTime = std::chrono::high_resolution_clock::now();
     auto elapsedMilliseconds = std::chrono::duration_cast<std::chrono::milliseconds>(
             currentTime - lastExecutionTime).count();

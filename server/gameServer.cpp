@@ -72,8 +72,6 @@ void run() {
                 if(fd == gameServer->listen_fd){
                     std::cout << "Connect to dbServer success." << std::endl;
                     gameServer->is_connected = true;
-                }else{
-                    continue;
                 }
             }
             if (fd == gameServer->sock_fd) {

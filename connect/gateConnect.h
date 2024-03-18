@@ -2,7 +2,6 @@
 #define UNITY_SERVER_GATECONNECT_H
 #include "connect.h"
 struct GateConnectManager : ConnectManager{
-    //游戏开始的所有帧
     std::unordered_map<std::string, int> uid2fd;
 
     GateConnectManager();

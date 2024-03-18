@@ -37,5 +37,7 @@ struct databaseManager{
     int getKey(const std::string& username, std::string& key) const;
 
     void init_link();
+
+    void init_data();
 };
 #endif //UNITY_SERVER_DBUTILS_H

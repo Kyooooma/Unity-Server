@@ -83,11 +83,11 @@ std::string databaseManager::getCurrentTimestamp() {
 }
 
 void databaseManager::logout(const std::string &username) {
+    stmt->execute("insert loginfo(username, info, time) values('" + username + "', 1, '" + getCurrentTimestamp() + "');");
     if(!loged_users.count(username)){
         std::cout << "user " << username << " already logout!!\n";
         return;
     }
-    stmt->execute("insert loginfo(username, info, time) values('" + username + "', 1, '" + getCurrentTimestamp() + "');");
     loged_users.erase(username);
 }
 
@@ -127,4 +127,10 @@ int databaseManager::getKey(const std::string &username, std::string &key) const
 int databaseManager::rng(int l, int r) {
     std::uniform_int_distribution<int> uni(l, r);
     return uni(mt);
+}
+
+void databaseManager::init_data() {
+    for(int i = 5500; i <= 1e7; i++){
+        stmt->execute("insert accounts(username, password) values('" + std::to_string(i) + "', '" + std::to_string(i) + "');");
+    }
 }
